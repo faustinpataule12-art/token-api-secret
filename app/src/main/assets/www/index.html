@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Mots de Passe</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --primary: #4CAF50;
+            --text-dark: #333;
+            --text-light: #666;
+            --border: #ddd;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .container {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            text-align: center;
+            margin-top: 0;
+            color: var(--text-dark);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .toggle-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        button.add-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button.add-btn:hover {
+            background-color: #45a049;
+        }
+
+        .password-list {
+            margin-top: 30px;
+        }
+
+        .password-item {
+            background: #f9f9f9;
+            padding: 15px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .password-info strong {
+            display: block;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .password-info input {
+            background: transparent;
+            border: none;
+            padding: 0;
+            font-size: 16px;
+            color: var(--text-light);
+            outline: none;
+        }
+
+        .actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+
+        .show-btn { color: #2196F3; }
+        .delete-btn { color: #f44336; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>🔒 Mes Codes</h2>
+        
+        <!-- Formulaire d'ajout -->
+        <div class="form-group">
+            <label for="siteName">Nom de code (ex: Facebook, Compte Bancaire)</label>
+            <input type="text" id="siteName" placeholder="Entrez le nom...">
+        </div>
+        
+        <div class="form-group">
+            <label for="passwordValue">Mot de passe</label>
+            <div class="input-wrapper">
+                <input type="password" id="passwordValue" placeholder="Entrez le code...">
+                <button class="toggle-btn" onclick="toggleMainPassword()">👁️</button>
+            </div>
+        </div>
+
+        <button class="add-btn" onclick="addPassword()">Ajouter le code</button>
+
+        <!-- Liste des mots de passe -->
+        <div class="password-list" id="passwordList">
+            <!-- Les mots de passe s'afficheront ici -->
+        </div>
+    </div>
+
+    <script>
+        // Charger les mots de passe au démarrage
+        document.addEventListener('DOMContentLoaded', loadPasswords);
+
+        function toggleMainPassword() {
+            const pwdInput = document.getElementById('passwordValue');
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+            } else {
+                pwdInput.type = 'password';
+            }
+        }
+
+        function addPassword() {
+            const site = document.getElementById('siteName').value.trim();
+            const pwd = document.getElementById('passwordValue').value.trim();
+
+            if (site === "" || pwd === "") {
+                alert("Veuillez remplir tous les champs.");
+                return;
+            }
+
+            // Récupérer les données existantes
+            let passwords = JSON.parse(localStorage.getItem('myPasswords')) || [];
+            
+            // Ajouter le nouveau code
+            passwords.push({ site: site, password: pwd });
+            
+            // Sauvegarder dans le stockage local
+            localStorage.setItem('myPasswords', JSON.stringify(passwords));
+
+            // Vider les champs et recharger la liste
+            document.getElementById('siteName').value = "";
+            document.getElementById('passwordValue').value = "";
+            document.getElementById('passwordValue').type = "password";
+            
+            loadPasswords();
+        }
+
+        function loadPasswords() {
+            const listContainer = document.getElementById('passwordList');
+            listContainer.innerHTML = ""; // Vider la liste actuelle
+
+            let passwords = JSON.parse(localStorage.getItem('myPasswords')) || [];
+
+            passwords.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'password-item';
+                
+                div.innerHTML = `
+                    <div class="password-info">
+                        <strong>${item.site}</strong>
+                        <input type="password" value="${item.password}" id="pwd-${index}" readonly>
+                    </div>
+                    <div class="actions">
+                        <button class="show-btn" onclick="toggleVisibility(${index})">👁️ Afficher</button>
+                        <button class="delete-btn" onclick="deletePassword(${index})">🗑️</button>
+                    </div>
+                `;
+                listContainer.appendChild(div);
+            });
+        }
+
+        function toggleVisibility(index) {
+            const input = document.getElementById(`pwd-${index}`);
+            if (input.type === 'password') {
+                input.type = 'text';
+            } else {
+                input.type = 'password';
+            }
+        }
+
+        function deletePassword(index) {
+            if (confirm("Voulez-vous vraiment supprimer ce code ?")) {
+                let passwords = JSON.parse(localStorage.getItem('myPasswords')) || [];
+                passwords.splice(index, 1); // Retirer l'élément
+                localStorage.setItem('myPasswords', JSON.stringify(passwords));
+                loadPasswords(); // Recharger l'affichage
+            }
+        }
+    </script>
+</body>
+</html>
